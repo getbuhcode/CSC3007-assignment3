@@ -15,18 +15,19 @@
   </style>
 </head>
 <body>
-  <h1>SG Population 2021</h1>  
+  <h1 style="text-align:center">SG Population 2021</h1>  
   <div class="tooltip"></div>
   <svg></svg>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
 
   <script>
-      let width = 1000, height = 700;
+      let width = 850, height = 450;
 
       let svg = d3.select("svg")
           .attr("viewBox", "0 0 " + width + " " + height)
           .style('background', "lightsteelblue")
+          
 
 
       // Load external data
@@ -49,7 +50,8 @@
       // Map and projection
       var projection = d3.geoMercator()
           .center([103.851959, 1.290270])
-          .fitExtent([[20, 20], [980, 580]], data[0]);
+          // .fitExtent([[20, 20], [980, 580]], data[0]);
+          .fitExtent([[50, 80], [800, 400]], data[0]);
 
       let geopath = d3.geoPath().projection(projection);
 
@@ -76,17 +78,17 @@
             return colorScale(d.pop)
           })
           .on("mouseover", (event, d) => {
-              d3.select(d.currentTarget)
-              .attr("opacity", 0.8);		
-              // console.log("aaaa" + data)
+              d3.select(event.currentTarget)
+              .attr("opacity", 0.7)		
               tooltip.html("Subzone: " + d.properties['Subzone Name'] + "<br/>" + "Population Size: " + populationData[d.properties['Subzone Name']])
                 .style("visibility", "visible")
-                .style("opacity", 0.9)
-                .style('left', d.pageX + "px")
-                .style('top', d.pageY + "px");
+                .style("opacity", 1)
+                .style('left', event.pageX + "px")
+                .style('top', event.pageY - 10 + "px")
+                console.log("hello" + d.pageX);
           })			
-          .on("mouseout", function(d) {	
-                d3.select(d.currentTarget)
+          .on("mouseout", (event, d) => {	
+                d3.select(event.currentTarget)
                 .attr("opacity", 1);
                 tooltip.style("visibility", "hidden");
           })
@@ -94,14 +96,15 @@
         // Add Legend
         var legend = d3.legendColor()
             .labels([200, 500, 1000, 5000, 10000, 20000, 40000, 80000])
-            .shapeWidth(50)
+            .shapeWidth(35)
             .orient('horizontal')
             .scale(colorScale)
             .title("Population Size")
             .labelFormat(d3.format(".0f"));
 
             svg.append("g")
-            .attr("transform", "translate(10,600)") 
+            .attr("transform", "translate(20,20)")
+            .style("font-size", 10 + "px")
             .call(legend);
 
       })
