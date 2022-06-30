@@ -1,0 +1,113 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    .tooltip {	
+    position: absolute;			
+    text-align: center;								
+    padding: 5px;				
+    font: 12px sans-serif;		
+    background: lightsteelblue;	
+    border: 0px;		
+    border-radius: 8px;			
+    pointer-events: none;	
+    }
+  </style>
+</head>
+<body>
+  <h1>SG Population 2021</h1>  
+  <div class="tooltip"></div>
+  <svg></svg>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
+
+  <script>
+      let width = 1000, height = 700;
+
+      let svg = d3.select("svg")
+          .attr("viewBox", "0 0 " + width + " " + height)
+          .style('background', "lightsteelblue")
+
+
+      // Load external data
+      Promise.all([d3.json("sgmap.json"), d3.csv("population2021.csv")]).then(data => {
+
+      console.log(data[0]);
+    //   console.log(data[1]);
+      console.log(data[0].features);
+
+      
+      // reorganised the data
+      let populationData = {}   
+      for (let i=0; i<data[1].length; i++) {
+        // console.log(data[1][i]['Subzone'].toUpperCase());
+        // console.log(data[1][i]['Population']);
+        populationData[data[1][i]['Subzone'].toUpperCase()] = data[1][i]['Population']
+      }
+      console.log(populationData)
+
+      // Map and projection
+      var projection = d3.geoMercator()
+          .center([103.851959, 1.290270])
+          .fitExtent([[20, 20], [980, 580]], data[0]);
+
+      let geopath = d3.geoPath().projection(projection);
+
+      // colorScale of map
+      let colorScale = d3.scaleThreshold()
+        .domain([200, 500, 1000, 5000, 10000, 20000, 40000, 80000])
+        .range(["#ffffe5","#fff7bc","#fee391","#fec44f","#fe9929","#ec7014","#cc4c02","#8c2d04"])
+      
+      // Define the div for the tooltip
+      var tooltip = d3.select("body")
+          .append("div")	
+          .attr("class", "tooltip")
+          .style("opacity", 0);
+
+      svg.append("g")
+          .attr("id", "districts")
+          .selectAll("path")
+          .data(data[0].features)
+          .enter()
+          .append("path")
+          .attr("d", geopath)
+          .attr("fill", function (d) { 
+            d.pop =  populationData[d.properties['Subzone Name']] || 0
+            return colorScale(d.pop)
+          })
+          .on("mouseover", (event, d) => {
+              d3.select(d.currentTarget)
+              .attr("opacity", 0.8);		
+              // console.log("aaaa" + data)
+              tooltip.html("Subzone: " + d.properties['Subzone Name'] + "<br/>" + "Population Size: " + populationData[d.properties['Subzone Name']])
+                .style("visibility", "visible")
+                .style("opacity", 0.9)
+                .style('left', d.pageX + "px")
+                .style('top', d.pageY + "px");
+          })			
+          .on("mouseout", function(d) {	
+                d3.select(d.currentTarget)
+                .attr("opacity", 1);
+                tooltip.style("visibility", "hidden");
+          })
+
+        // Add Legend
+        var legend = d3.legendColor()
+            .labels([200, 500, 1000, 5000, 10000, 20000, 40000, 80000])
+            .shapeWidth(50)
+            .orient('horizontal')
+            .scale(colorScale)
+            .title("Population Size")
+            .labelFormat(d3.format(".0f"));
+
+            svg.append("g")
+            .attr("transform", "translate(10,600)") 
+            .call(legend);
+
+      })
+
+     
+  </script>
+
+</body>
+</html>
